@@ -1,0 +1,116 @@
+﻿@page "/movie"
+@page "/movie/{id:int}"
+@using Models
+@inject NavigationManager NavigationManager
+
+<PageTitle> @title</PageTitle>
+<h1>Movie Catalog</h1>
+<h3>@title</h3>
+
+@if (movie is null)
+{
+    <p><em>Loading....</em></p>
+}
+else
+{
+    @* // use bootstarp to give a nice HTML part *@
+    <div class="row">
+        <div class="col-sm-4">
+            <EditForm Model="@movie" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name:</label>
+                    <InputText id="name" @bind-Value="movie.Name" class="form-control"></InputText>
+                </div>
+
+                <div class="mb-3">
+                    <label for="genre" class="form-label">Genre:</label>
+                    <InputSelect id="genre" @bind-Value="movie.Genre" class="form-select">
+                        <option value="">Select genre</option>
+                        <option value="Animation">Animation</option>
+                        <option value="Science Fiction">Science Fiction</option>
+                        <option value="Romantic">Romantic</option>
+                        <option value="Historical">Historical</option>
+                        <option value="Motivational">Motivational</option>
+
+                    </InputSelect>
+                </div>
+
+                <div class="mb-3">
+                    <label for="price" class="form-label">Price:</label>
+                    <InputNumber id="name" @bind-Value="movie.Price" class="form-control"></InputNumber>
+                </div>
+
+                <div class="mb-3">
+                    <label for="releaseDate" class="form-label">Release Date:</label>
+                    <InputDate id="releaseDate" @bind-Value="movie.ReleaseDate" class="form-control"></InputDate>
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" @onclick="@Cancel">Cancel</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+    private Movie? movie;
+    @* private Movie movie = new()
+{
+Name = string.Empty,
+Genre = string.Empty,
+ReleaseDate = DateTime.UtcNow
+}; *@
+
+    @* deault function by Razor, will called for teh parameter *@
+    private string title = string.Empty;
+    protected override void OnParametersSet()
+    {
+        @* base.OnParametersSet(); *@
+        if (Id is not null)
+        {
+            Movie foundMovie = MovieClient.GetMovie(Id.Value);
+            movie = new()
+                {
+                    Id = foundMovie.Id,
+                    Name = foundMovie.Name,
+                    Genre = foundMovie.Genre,
+                    Price = foundMovie.Price,
+                    ReleaseDate = foundMovie.ReleaseDate
+                };
+            title = $"Edit {movie.Name}";
+        }
+        else
+        {
+            movie = new()
+                {
+                    Name = string.Empty,
+                    Genre = string.Empty,
+                    ReleaseDate = DateTime.UtcNow
+                };
+            title = "New Movie";
+        }
+    }
+
+    private void HandleSubmit()
+    {
+        if (movie!.Id == 0)
+        {
+            MovieClient.AddMovie(movie);
+        }
+        else
+        {
+            MovieClient.UpdateMovie(movie);
+        }
+        @* for navigating to Home page *@
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
